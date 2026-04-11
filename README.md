@@ -1,8 +1,12 @@
 <p align="center">
+  <img src="https://raw.githubusercontent.com/klaasnicolaas/sharewise/main/app/icon.svg" alt="Sharewise icon" width="72" height="72">
+</p>
+
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/klaasnicolaas/sharewise/main/public/assets/brand/sharewise-wordmark-dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/klaasnicolaas/sharewise/main/public/assets/brand/sharewise-wordmark-light.svg">
-    <img alt="Sharewise" src="https://raw.githubusercontent.com/klaasnicolaas/sharewise/main/public/assets/brand/sharewise-wordmark-light.svg" width="320">
+    <img alt="Sharewise" src="https://raw.githubusercontent.com/klaasnicolaas/sharewise/main/public/assets/brand/sharewise-wordmark-light.svg" width="240">
   </picture>
 </p>
 
