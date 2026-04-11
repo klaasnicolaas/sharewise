@@ -101,8 +101,8 @@ export function buildHouseholdBreakdown(
   const members = result.participantBreakdowns.filter((pb) => pb.householdId === householdId);
 
   const lines: string[] = [
-    formatSelectorMessage(locale, "breakdownTitle", { household: ht.householdName }),
-    `${"─".repeat(30)}`,
+    `*${formatSelectorMessage(locale, "breakdownTitle", { household: ht.householdName })}*`,
+    "",
   ];
 
   for (const m of members) {
@@ -131,8 +131,7 @@ export function buildHouseholdBreakdown(
     lines.push("");
   }
 
-  lines.push(`${"─".repeat(30)}`);
-  lines.push(`${copy.selectors.total}: ${euro(ht.roundedDisplayTotal, locale)}`);
+  lines.push(`*${copy.selectors.total}: ${euro(ht.roundedDisplayTotal, locale)}*`);
 
   if (!ht.roundingAdjustment.isZero()) {
     lines.push(
