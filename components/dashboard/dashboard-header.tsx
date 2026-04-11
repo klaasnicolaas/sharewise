@@ -36,19 +36,21 @@ export function DashboardHeader({
         <div className="flex items-center gap-1">
           <div className="hidden items-center rounded-full border border-border/75 bg-muted/35 p-0.5 shadow-xs sm:flex">
             {(["nl", "en"] as const).map((language) => (
-              <button
+              <Button
                 key={language}
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setLocale(language)}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all",
+                  "h-8 rounded-full px-3 text-[11px] font-semibold transition-all",
                   locale === language
                     ? "bg-background text-foreground shadow-sm ring-1 ring-border/70"
                     : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                 )}
               >
                 {copy.language[language]}
-              </button>
+              </Button>
             ))}
           </div>
           <Button

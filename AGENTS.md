@@ -23,6 +23,7 @@ State flows top-down from `SharewiseDashboard` through `DashboardState` and `Das
 - **Linting** — ESLint with `eslint-config-next` (core-web-vitals + typescript). Run `npm run lint`.
 - **Imports** — use `@/` path aliases (`@/lib/...`, `@/components/...`). Never use relative paths that go above the current directory.
 - **UI primitives** — shadcn/ui components live in `components/ui/`. Use existing primitives before adding new ones.
+- **UI primitives are baseline** — do not modify shared shadcn/ui primitive files such as `components/ui/button.tsx`, `components/ui/dialog.tsx`, or `components/ui/drawer.tsx` unless the user explicitly asks for a primitive-level change. Prefer fixing sizing or layout at the usage site first.
 - **Icons** — Lucide React only. Do not add other icon libraries.
 - **i18n** — all user-facing strings come from `lib/i18n.ts` translations object, keyed by `nl` and `en`. Access via `useI18n()` hook. Never hardcode Dutch or English strings in components.
 - **Math** — all monetary calculations use `decimal.js` via `lib/calculations/money.ts` helpers. Never use native floating-point arithmetic for money.

@@ -3,6 +3,7 @@
 import {
   ArrowRightLeft,
   Banknote,
+  ChevronDown,
   EyeOff,
   Home,
   Moon,
@@ -20,7 +21,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SectionHeader } from "@/components/dashboard/section-header";
 
@@ -93,7 +100,13 @@ export function CostsStep({
   return (
     <div className="space-y-8 animate-in fade-in-0 slide-in-from-right-4 duration-300">
       <SectionHeader title={copy.costs.title} subtitle={copy.costs.subtitle}>
-        <Button type="button" variant="outline" onClick={addCostItem} className="shadow-sm">
+        <Button
+          type="button"
+          variant="outline"
+          size="default"
+          onClick={addCostItem}
+          className="h-10 gap-2 shadow-sm"
+        >
           <Plus className="size-4 mr-1.5" />
           {copy.costs.addItem}
         </Button>
@@ -139,10 +152,10 @@ export function CostsStep({
                 {/* Distribution type color accent */}
                 <div className={cn("w-1 shrink-0", visual.bg)} />
 
-                <div className="flex-1 p-4">
+                <div className="relative flex-1 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     {/* Type icon + label — takes remaining space */}
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex min-w-0 flex-1 items-center gap-3 pr-10 sm:pr-0">
                       <div
                         className={cn(
                           "flex size-8 shrink-0 items-center justify-center rounded-lg",
@@ -154,7 +167,7 @@ export function CostsStep({
                       <Input
                         value={c.label}
                         placeholder={copy.costs.descriptionPlaceholder}
-                        className="flex-1 h-9 font-medium border-transparent bg-transparent shadow-none hover:bg-muted/30 focus:border-border focus:bg-card transition-colors"
+                        className="flex-1 h-9 rounded-md border-transparent bg-transparent font-medium shadow-none hover:bg-muted/30 focus:border-border focus:bg-card transition-colors"
                         onChange={(e) =>
                           updateSync((d) => ({
                             ...d,
@@ -172,7 +185,7 @@ export function CostsStep({
                       <Input
                         inputMode="decimal"
                         value={String(c.amount)}
-                        className="w-full h-7 text-right tabular-nums font-semibold text-sm border-transparent bg-transparent shadow-none p-0 focus:bg-card focus:border-border"
+                        className="w-full h-7 border-transparent bg-transparent p-0 text-right tabular-nums font-semibold text-sm shadow-none focus:bg-card focus:border-border"
                         onChange={(e) =>
                           updateSync((d) => ({
                             ...d,
@@ -186,82 +199,87 @@ export function CostsStep({
                       />
                     </div>
 
-                    {/* Distribution select — fixed width */}
-                    <Select
-                      value={c.distributionType}
-                      onValueChange={(v) => {
-                        if (v)
-                          update((d) => ({
-                            ...d,
-                            costItems: d.costItems.map((x) =>
-                              x.id === c.id
-                                ? {
-                                    ...x,
-                                    distributionType: v as DistributionType,
-                                    assignedHouseholdId:
-                                      v === "direct_household"
-                                        ? (x.assignedHouseholdId ?? d.households[0]?.id)
-                                        : undefined,
-                                  }
-                                : x,
-                            ),
-                          }));
-                      }}
-                    >
-                      <SelectTrigger className="shrink-0 sm:w-52 h-9">
+                    {/* Distribution dropdown — fixed width */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex h-9 w-full items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/15 px-2.5 text-sm font-medium text-foreground shadow-none transition-colors hover:bg-muted/25 sm:w-52">
                         <span className="flex items-center gap-2">
-                          <DistIcon className={cn("size-3.5", visual.color)} />
-                          {distributionOptions.find((o) => o.value === c.distributionType)?.label}
+                          <DistIcon className={cn("size-3.5 shrink-0", visual.color)} />
+                          <span className="truncate">
+                            {distributionOptions.find((o) => o.value === c.distributionType)?.label}
+                          </span>
                         </span>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {distributionOptions.map((o) => {
-                          const OptIcon = DISTRIBUTION_VISUALS[o.value].icon;
-                          return (
-                            <SelectItem key={o.value} value={o.value}>
-                              <span className="flex items-center gap-2">
+                        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-auto">
+                        <DropdownMenuRadioGroup
+                          value={c.distributionType}
+                          onValueChange={(v) => {
+                            if (v)
+                              update((d) => ({
+                                ...d,
+                                costItems: d.costItems.map((x) =>
+                                  x.id === c.id
+                                    ? {
+                                        ...x,
+                                        distributionType: v as DistributionType,
+                                        assignedHouseholdId:
+                                          v === "direct_household"
+                                            ? (x.assignedHouseholdId ?? d.households[0]?.id)
+                                            : undefined,
+                                      }
+                                    : x,
+                                ),
+                              }));
+                          }}
+                        >
+                          {distributionOptions.map((o) => {
+                            const OptIcon = DISTRIBUTION_VISUALS[o.value].icon;
+                            return (
+                              <DropdownMenuRadioItem key={o.value} value={o.value}>
                                 <OptIcon
-                                  className={cn("size-3.5", DISTRIBUTION_VISUALS[o.value].color)}
+                                  className={cn("size-3.5 shrink-0", DISTRIBUTION_VISUALS[o.value].color)}
                                 />
                                 {o.label}
-                              </span>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                              </DropdownMenuRadioItem>
+                            );
+                          })}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
-                    {/* Household select for direct — fixed width */}
+                    {/* Household dropdown for direct — fixed width */}
                     {c.distributionType === "direct_household" ? (
-                      <Select
-                        value={c.assignedHouseholdId ?? ""}
-                        onValueChange={(v) => {
-                          if (v)
-                            update((d) => ({
-                              ...d,
-                              costItems: d.costItems.map((x) =>
-                                x.id === c.id ? { ...x, assignedHouseholdId: v } : x,
-                              ),
-                            }));
-                        }}
-                      >
-                        <SelectTrigger className="shrink-0 sm:w-36 h-9">
-                          <span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="inline-flex h-9 w-full items-center justify-between gap-2 rounded-md border border-border/60 bg-muted/15 px-2.5 text-sm font-medium text-foreground shadow-none transition-colors hover:bg-muted/25 sm:w-auto">
+                          <span className="truncate">
                             {householdOptions.find((o) => o.value === c.assignedHouseholdId)
                               ?.label ?? copy.costs.householdPlaceholder}
                           </span>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {householdOptions.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>
-                              {o.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-auto">
+                          <DropdownMenuRadioGroup
+                            value={c.assignedHouseholdId ?? ""}
+                            onValueChange={(v) => {
+                              if (v)
+                                update((d) => ({
+                                  ...d,
+                                  costItems: d.costItems.map((x) =>
+                                    x.id === c.id ? { ...x, assignedHouseholdId: v } : x,
+                                  ),
+                                }));
+                            }}
+                          >
+                            {householdOptions.map((o) => (
+                              <DropdownMenuRadioItem key={o.value} value={o.value}>
+                                {o.label}
+                              </DropdownMenuRadioItem>
+                            ))}
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     ) : (
-                      /* Placeholder to keep delete button aligned when no household select */
-                      <div className="hidden sm:block sm:w-36 shrink-0" />
+                      <div className="hidden" />
                     )}
 
                     {/* Delete — fixed width */}
@@ -269,7 +287,7 @@ export function CostsStep({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-8 shrink-0 text-muted-foreground/30 opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/5 transition-all"
+                      className="absolute top-3 right-3 size-8 shrink-0 text-muted-foreground/55 opacity-100 transition-all hover:bg-destructive/5 hover:text-destructive sm:static sm:self-auto sm:opacity-0 sm:group-hover:opacity-100"
                       onClick={() =>
                         update((d) => ({
                           ...d,
@@ -296,8 +314,8 @@ export function CostsStep({
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              className="mt-4"
+              size="default"
+              className="mt-4 h-10 gap-2"
               onClick={addCostItem}
             >
               <Plus className="size-4 mr-1" />
