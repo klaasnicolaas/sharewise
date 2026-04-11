@@ -6,12 +6,14 @@ import { z } from "zod";
 import { useI18n } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialogBody,
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/responsive-dialog";
 import { cn } from "@/lib/utils";
 import type { ProjectData } from "@/lib/calculations/types";
 import { projectSchema } from "@/lib/calculations/validation";
@@ -77,13 +79,16 @@ export function ImportDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="w-[min(92vw,48rem)] max-w-[min(92vw,48rem)] overflow-hidden p-0 sm:max-w-[48rem]">
-        <DialogHeader className="px-6 pt-6">
-          <DialogTitle>{copy.importDialog.title}</DialogTitle>
-          <DialogDescription>{copy.importDialog.description}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-5 px-6 pb-6 pt-1">
+    <ResponsiveDialog open={open} onOpenChange={handleDialogChange}>
+      <ResponsiveDialogContent
+        className="overflow-hidden p-0"
+        dialogClassName="w-[min(92vw,48rem)] max-w-[min(92vw,48rem)] sm:max-w-[48rem]"
+      >
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{copy.importDialog.title}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{copy.importDialog.description}</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogBody className="space-y-5">
           <input
             ref={fileInputRef}
             type="file"
@@ -166,17 +171,16 @@ export function ImportDialog({
               {errorMessage}
             </div>
           )}
-
-          <div className="flex items-center justify-end gap-2 border-t border-border/70 pt-4">
-            <Button type="button" variant="ghost" onClick={resetState}>
-              {copy.common.clear}
-            </Button>
-            <Button type="button" disabled={!fileContents.trim()} onClick={parseAndImport}>
-              {copy.importDialog.import}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogBody>
+        <ResponsiveDialogFooter>
+          <Button type="button" variant="ghost" onClick={resetState}>
+            {copy.common.clear}
+          </Button>
+          <Button type="button" disabled={!fileContents.trim()} onClick={parseAndImport}>
+            {copy.importDialog.import}
+          </Button>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

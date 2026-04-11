@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Moon, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, ChevronDown, Moon, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
 import { z } from "zod";
 import type { Participant } from "@/lib/calculations/types";
 import type { DashboardActions, DashboardState } from "@/lib/dashboard-types";
@@ -11,8 +11,15 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SectionHeader } from "@/components/dashboard/section-header";
 
@@ -81,23 +88,27 @@ function ParticipantSetting({
 }) {
   return (
     <Tooltip>
-      <TooltipTrigger render={<label className="inline-flex" />}>
-        <span
-          className={cn(
-            "inline-flex items-center gap-3 rounded-md px-1.5 py-1.5 transition-colors select-none",
-            checked ? "text-foreground" : "text-foreground/78 hover:text-foreground",
-          )}
-        >
-          <span
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={() => onCheckedChange(!checked)}
             className={cn(
-              "text-[13px] font-medium tracking-tight",
-              checked ? "text-foreground" : "text-foreground/82",
+              "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-medium transition-colors select-none",
+              checked
+                ? "border-primary/25 bg-primary/10 text-primary"
+                : "border-border/50 bg-muted/30 text-muted-foreground hover:border-border hover:text-foreground",
             )}
-          >
-            {label}
-          </span>
-          <Switch checked={checked} onCheckedChange={onCheckedChange} size="sm" />
-        </span>
+          />
+        }
+      >
+        <Check
+          className={cn(
+            "size-3 shrink-0 transition-opacity",
+            checked ? "opacity-100" : "opacity-0",
+          )}
+        />
+        {label}
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-56 text-pretty">
         {description}
@@ -128,15 +139,109 @@ function ParticipantRow({
 }) {
   const p = participant;
   const initials = getInitials(p.name || "?");
+  const selectedHouseholdLabel =
+    householdOptions.find((o) => o.value === p.householdId)?.label ??
+    copy.participants.individualOption;
+
+  const householdDropdownItems = (
+    <>
+      <DropdownMenuRadioGroup
+        value={p.householdId ?? "__none__"}
+        onValueChange={(value) => onHouseholdChange(p.id, value)}
+      >
+        <DropdownMenuRadioItem value="__none__">
+          {copy.participants.individualOption}
+        </DropdownMenuRadioItem>
+        {householdOptions.map((opt) => (
+          <DropdownMenuRadioItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </DropdownMenuRadioItem>
+        ))}
+      </DropdownMenuRadioGroup>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onSelect={() => onHouseholdChange(p.id, "__create__")}>
+        <Plus className="size-3.5" />
+        {copy.participants.newHouseholdOption}
+      </DropdownMenuItem>
+    </>
+  );
+
+  const nightsPill = (
+    <div className="flex shrink-0 items-center gap-1 rounded-lg bg-muted/35 px-2 py-1">
+      <Moon className="size-3 text-muted-foreground" />
+      <Input
+        type="number"
+        min={0}
+        step={1}
+        value={p.nights}
+        className="h-6 w-7 border-transparent bg-transparent p-0 text-center text-sm font-semibold tabular-nums shadow-none focus:border-border focus:bg-card"
+        onChange={(e) =>
+          update((d) => ({
+            ...d,
+            participants: d.participants.map((x) =>
+              x.id === p.id ? { ...x, nights: Math.max(0, Number(e.target.value) || 0) } : x,
+            ),
+          }))
+        }
+      />
+      <span className="hidden text-[10px] text-muted-foreground sm:inline">
+        {copy.participants.nightsShort}
+      </span>
+    </div>
+  );
+
+  const settingPills = (
+    <>
+      <ParticipantSetting
+        checked={p.countInNightDistribution}
+        label={copy.participants.settingNightLabel}
+        description={copy.participants.settingNightDescription}
+        onCheckedChange={(checked) =>
+          update((d) => ({
+            ...d,
+            participants: d.participants.map((x) =>
+              x.id === p.id ? { ...x, countInNightDistribution: checked } : x,
+            ),
+          }))
+        }
+      />
+      <ParticipantSetting
+        checked={p.countInStayCosts}
+        label={copy.participants.settingStayLabel}
+        description={copy.participants.settingStayDescription}
+        onCheckedChange={(checked) =>
+          update((d) => ({
+            ...d,
+            participants: d.participants.map((x) =>
+              x.id === p.id ? { ...x, countInStayCosts: checked } : x,
+            ),
+          }))
+        }
+      />
+      <ParticipantSetting
+        checked={p.countInHeadcountCosts}
+        label={copy.participants.settingHeadcountLabel}
+        description={copy.participants.settingHeadcountDescription}
+        onCheckedChange={(checked) =>
+          update((d) => ({
+            ...d,
+            participants: d.participants.map((x) =>
+              x.id === p.id ? { ...x, countInHeadcountCosts: checked } : x,
+            ),
+          }))
+        }
+      />
+    </>
+  );
 
   return (
-    <div className={cn("group relative py-5 px-2", !isLast && "border-b border-border/20")}>
-      {/* Top row: avatar, name, household, nights, delete */}
-      <div className="flex items-start gap-3">
-        {/* Avatar */}
+    <div className={cn("group px-3 py-3 sm:px-4 sm:py-3", !isLast && "border-b border-border/20")}>
+      {/* ── Row 1 ── */}
+      <div className="flex items-start gap-2">
+        {/* Avatar — nudge down to align with name input */}
         <div
           className={cn(
-            "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold shadow-sm",
+            "mt-1 flex size-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold shadow-sm",
             colorScheme.bg,
             colorScheme.text,
           )}
@@ -144,67 +249,44 @@ function ParticipantRow({
           {initials}
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <Input
-              value={p.name}
-              placeholder={copy.participants.participantPlaceholder}
-              className="h-9 flex-1 font-medium border-transparent bg-transparent shadow-none hover:bg-muted/30 focus:border-border focus:bg-card transition-colors"
-              onChange={(e) =>
-                updateSync((d) => ({
-                  ...d,
-                  participants: d.participants.map((x) =>
-                    x.id === p.id ? { ...x, name: e.target.value } : x,
-                  ),
-                }))
-              }
-            />
-
-            <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
-              <Select
-                value={p.householdId ?? "__none__"}
-                onValueChange={(value) => onHouseholdChange(p.id, value ?? "__none__")}
-              >
-                <SelectTrigger className="h-8 min-w-38 border-border/60 bg-muted/15 px-2.5 text-[12px] font-medium text-foreground shadow-none">
-                  {householdOptions.find((option) => option.value === p.householdId)?.label ??
-                    copy.participants.individualOption}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{copy.participants.individualOption}</SelectItem>
-                  {householdOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="__create__">{copy.participants.newHouseholdOption}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex shrink-0 items-center gap-1.5 rounded-lg bg-muted/35 px-2 py-1">
-                <Moon className="size-3.5 text-muted-foreground" />
-                <Input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={p.nights}
-                  className="h-7 w-12 border-transparent bg-transparent p-0 text-center text-sm font-semibold tabular-nums shadow-none focus:border-border focus:bg-card"
-                  onChange={(e) =>
-                    update((d) => ({
-                      ...d,
-                      participants: d.participants.map((x) =>
-                        x.id === p.id
-                          ? { ...x, nights: Math.max(0, Number(e.target.value) || 0) }
-                          : x,
-                      ),
-                    }))
-                  }
-                />
-                <span className="hidden text-[10px] text-muted-foreground sm:inline">
-                  {copy.participants.nightsShort}
-                </span>
-              </div>
-            </div>
+        {/* Name + nights sub-line (mobile) / name only (desktop) */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <Input
+            value={p.name}
+            placeholder={copy.participants.participantPlaceholder}
+            className="h-8 rounded-md border-transparent bg-transparent font-medium shadow-none transition-colors hover:bg-muted/30 focus:border-border focus:bg-card"
+            onChange={(e) =>
+              updateSync((d) => ({
+                ...d,
+                participants: d.participants.map((x) =>
+                  x.id === p.id ? { ...x, name: e.target.value } : x,
+                ),
+              }))
+            }
+          />
+          {/* Household dropdown + nights — visible below name on mobile only */}
+          <div className="flex items-center gap-1.5 sm:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="inline-flex h-7 flex-1 items-center justify-between gap-1.5 rounded-full border border-border/50 bg-muted/30 px-2.5 text-[12px] font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50">
+                <span className="min-w-0 truncate">{selectedHouseholdLabel}</span>
+                <ChevronDown className="size-3 shrink-0 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-auto">{householdDropdownItems}</DropdownMenuContent>
+            </DropdownMenu>
+            {nightsPill}
           </div>
+        </div>
+
+        {/* Desktop: household dropdown + nights */}
+        <div className="hidden items-center gap-2 sm:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex h-8 w-36 items-center justify-between gap-1.5 rounded-md border border-border/60 bg-muted/15 px-2.5 text-[12px] font-medium text-foreground shadow-none transition-colors hover:bg-muted/25">
+              <span className="truncate">{selectedHouseholdLabel}</span>
+              <ChevronDown className="size-3 shrink-0 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-auto">{householdDropdownItems}</DropdownMenuContent>
+          </DropdownMenu>
+          {nightsPill}
         </div>
 
         {/* Delete */}
@@ -212,7 +294,7 @@ function ParticipantRow({
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 shrink-0 text-muted-foreground/55 opacity-0 transition-all group-hover:opacity-100 hover:bg-destructive/5 hover:text-destructive"
+          className="mt-1 size-8 shrink-0 text-muted-foreground/40 transition-all hover:bg-destructive/5 hover:text-destructive sm:mt-0"
           onClick={() =>
             update((d) => ({
               ...d,
@@ -224,14 +306,35 @@ function ParticipantRow({
         </Button>
       </div>
 
-      {/* Second row: settings + note */}
-      <div className="ml-[52px] mt-3 flex flex-wrap items-center gap-2">
-        <div className="mr-auto flex min-w-[260px] flex-1 items-center gap-1 text-muted-foreground">
+      {/* ── Mobile Row 2: 3 toggle pills only, never wraps ── */}
+      <div className="mt-2 flex items-center gap-1.5 pl-10 sm:hidden">{settingPills}</div>
+
+      {/* ── Mobile Row 3: notes ── */}
+      <div className="mt-1.5 flex items-center gap-1 pl-10 text-muted-foreground sm:hidden">
+        <Pencil className="size-3 shrink-0" />
+        <Input
+          value={p.notes ?? ""}
+          placeholder={copy.participants.notePlaceholder}
+          className="h-7 min-w-0 flex-1 rounded-md border-transparent bg-transparent px-1 text-[11px] text-muted-foreground shadow-none focus:border-border focus:bg-card"
+          onChange={(e) =>
+            updateSync((d) => ({
+              ...d,
+              participants: d.participants.map((x) =>
+                x.id === p.id ? { ...x, notes: e.target.value } : x,
+              ),
+            }))
+          }
+        />
+      </div>
+
+      {/* ── Desktop Row 2: notes + settings ── */}
+      <div className="mt-2 hidden flex-wrap items-center gap-x-3 gap-y-1.5 pl-10 sm:flex">
+        <div className="flex min-w-0 flex-1 items-center gap-1 text-muted-foreground">
           <Pencil className="size-3 shrink-0" />
           <Input
             value={p.notes ?? ""}
             placeholder={copy.participants.notePlaceholder}
-            className="h-7 w-full border-transparent bg-transparent text-[11px] text-muted-foreground shadow-none focus:border-border focus:bg-card"
+            className="h-7 min-w-0 flex-1 rounded-md border-transparent bg-transparent px-1 text-[11px] text-muted-foreground shadow-none focus:border-border focus:bg-card"
             onChange={(e) =>
               updateSync((d) => ({
                 ...d,
@@ -242,45 +345,7 @@ function ParticipantRow({
             }
           />
         </div>
-        <ParticipantSetting
-          checked={p.countInNightDistribution}
-          label={copy.participants.settingNightLabel}
-          description={copy.participants.settingNightDescription}
-          onCheckedChange={(checked) =>
-            update((d) => ({
-              ...d,
-              participants: d.participants.map((x) =>
-                x.id === p.id ? { ...x, countInNightDistribution: checked } : x,
-              ),
-            }))
-          }
-        />
-        <ParticipantSetting
-          checked={p.countInStayCosts}
-          label={copy.participants.settingStayLabel}
-          description={copy.participants.settingStayDescription}
-          onCheckedChange={(checked) =>
-            update((d) => ({
-              ...d,
-              participants: d.participants.map((x) =>
-                x.id === p.id ? { ...x, countInStayCosts: checked } : x,
-              ),
-            }))
-          }
-        />
-        <ParticipantSetting
-          checked={p.countInHeadcountCosts}
-          label={copy.participants.settingHeadcountLabel}
-          description={copy.participants.settingHeadcountDescription}
-          onCheckedChange={(checked) =>
-            update((d) => ({
-              ...d,
-              participants: d.participants.map((x) =>
-                x.id === p.id ? { ...x, countInHeadcountCosts: checked } : x,
-              ),
-            }))
-          }
-        />
+        <div className="flex flex-wrap gap-1.5">{settingPills}</div>
       </div>
     </div>
   );
@@ -516,13 +581,15 @@ export function ParticipantsStep({
 
                 {/* Delete on hover */}
                 {project.households.length > 1 && (
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                     <Tooltip>
                       <TooltipTrigger
                         render={
-                          <button
+                          <Button
                             type="button"
-                            className="rounded-md p-0.5 text-destructive/75 transition-colors hover:bg-destructive/5 hover:text-destructive"
+                            variant="ghost"
+                            size="icon-xs"
+                            className="text-destructive/75 hover:bg-destructive/5 hover:text-destructive"
                             onClick={() => removeHousehold(h.id)}
                           />
                         }

@@ -139,9 +139,9 @@ export function PaymentsStep({
               <Button
                 type="button"
                 variant={isCopied ? "default" : "outline"}
-                size="sm"
+                size="default"
                 className={cn(
-                  "mt-5 w-full transition-all duration-200",
+                  "mt-5 w-full justify-center gap-2 transition-all duration-200",
                   isCopied && "bg-primary text-primary-foreground",
                 )}
                 onClick={() => handleCopy(copyKey, rowText)}
@@ -175,7 +175,8 @@ export function PaymentsStep({
           <Button
             type="button"
             variant="outline"
-            className="flex-1 justify-center h-12 gap-2.5"
+            size="default"
+            className="h-10 flex-1 justify-center gap-2"
             onClick={() => handleCopy("group", summaryText)}
           >
             {copyState === "group" ? (
@@ -187,7 +188,8 @@ export function PaymentsStep({
           </Button>
           <Button
             type="button"
-            className="flex-1 justify-center h-12 gap-2.5 shadow-sm"
+            size="default"
+            className="h-10 flex-1 justify-center gap-2 shadow-sm"
             onClick={() => handleCopy("payments", paymentSummaryText)}
           >
             {copyState === "payments" ? <Check className="size-4" /> : <Copy className="size-4" />}

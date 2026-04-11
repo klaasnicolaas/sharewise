@@ -19,13 +19,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/responsive-dialog";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -201,6 +202,118 @@ export function CalculationStep({
     window.setTimeout(() => setCopiedHh((c) => (c === householdId ? null : c)), 1600);
   }
 
+  function renderParticipantDetails(pb: (typeof result.participantBreakdowns)[number]) {
+    return (
+      <ResponsiveDialogContent className="max-w-lg">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{pb.participantName}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {pb.householdName} &middot; {pb.nights}{" "}
+            {pb.nights === 1 ? copy.common.night : copy.common.nights}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogBody className="space-y-1">
+          {pb.costItems.map((item) => (
+            <div key={item.costItemId} className="flex items-center justify-between py-2.5 text-sm">
+              <div className="flex items-center gap-2">
+                <span>{item.label}</span>
+                <Badge variant="outline" className="text-[10px] font-normal">
+                  {getDistributionLabel(locale, item.distributionType)}
+                </Badge>
+              </div>
+              <span className="tabular-nums font-medium">{euro(item.exactAmount, locale)}</span>
+            </div>
+          ))}
+          <Separator className="my-2" />
+          <div className="flex items-center justify-between py-2 text-base font-bold">
+            <span>{copy.common.total}</span>
+            <span className="tabular-nums text-primary">{euro(pb.total, locale)}</span>
+          </div>
+        </ResponsiveDialogBody>
+      </ResponsiveDialogContent>
+    );
+  }
+
+  function renderHouseholdBreakdownDetails({
+    ht,
+    directCosts,
+    householdPerNightTotal,
+    householdStayTotal,
+    householdHeadcountTotal,
+    exactTotal,
+  }: {
+    ht: (typeof result.householdTotals)[number];
+    directCosts: typeof result.directHouseholdItems;
+    householdPerNightTotal: typeof ZERO;
+    householdStayTotal: typeof ZERO;
+    householdHeadcountTotal: typeof ZERO;
+    exactTotal: typeof ZERO;
+  }) {
+    return (
+      <div className="rounded-xl border border-border/50 bg-muted/15 p-3">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {copy.calculation.buildUp}
+        </p>
+        <div className="space-y-2 text-sm">
+          {!householdPerNightTotal.isZero() && (
+            <BreakdownSummaryRow
+              label={copy.calculation.nightShare}
+              value={euro(householdPerNightTotal, locale)}
+              tooltipLabel={`${copy.calculation.includesLabel} ${copy.calculation.nightShare.toLowerCase()}`}
+              tooltipDescription={copy.calculation.includedItems}
+              tooltipItems={perNightItemLabels}
+            />
+          )}
+          {!householdStayTotal.isZero() && (
+            <BreakdownSummaryRow
+              label={copy.calculation.stayShare}
+              value={euro(householdStayTotal, locale)}
+              tooltipLabel={`${copy.calculation.includesLabel} ${copy.calculation.stayShare.toLowerCase()}`}
+              tooltipDescription={copy.calculation.includedItems}
+              tooltipItems={perStayItemLabels}
+            />
+          )}
+          {!householdHeadcountTotal.isZero() && (
+            <BreakdownSummaryRow
+              label={copy.calculation.headcountShare}
+              value={euro(householdHeadcountTotal, locale)}
+              tooltipLabel={`${copy.calculation.includesLabel} ${copy.calculation.headcountShare.toLowerCase()}`}
+              tooltipDescription={copy.calculation.includedItems}
+              tooltipItems={headcountItemLabels}
+            />
+          )}
+          {directCosts.map((d) => (
+            <div key={d.costItemId} className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-muted-foreground">
+                {copy.calculation.directAssigned}: {d.label}
+              </span>
+              <span className="tabular-nums font-medium">{euro(d.exactAmount, locale)}</span>
+            </div>
+          ))}
+          <Separator className="opacity-60" />
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted-foreground">{copy.calculation.exactTotal}</span>
+            <span className="tabular-nums font-medium">{euro(exactTotal, locale)}</span>
+          </div>
+          {!ht.roundingAdjustment.isZero() && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">{copy.common.rounding}</span>
+              <span className="tabular-nums font-medium">
+                {euro(ht.roundingAdjustment, locale)}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 pt-1 text-base">
+            <span className="font-semibold">{copy.calculation.finalTotal}</span>
+            <span className="tabular-nums font-bold text-primary">
+              {euro(ht.roundedDisplayTotal, locale)}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in-0 slide-in-from-right-4 duration-300">
       <SectionHeader title={copy.calculation.title} subtitle={copy.calculation.subtitle} />
@@ -367,8 +480,8 @@ export function CalculationStep({
                       {euro(pb.total, locale)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Dialog>
-                        <DialogTrigger
+                      <ResponsiveDialog>
+                        <ResponsiveDialogTrigger
                           render={
                             <Button
                               variant="ghost"
@@ -378,42 +491,9 @@ export function CalculationStep({
                           }
                         >
                           {copy.common.details}
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                          <DialogHeader>
-                            <DialogTitle>{pb.participantName}</DialogTitle>
-                            <DialogDescription>
-                              {pb.householdName} &middot; {pb.nights}{" "}
-                              {pb.nights === 1 ? copy.common.night : copy.common.nights}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-1 mt-2">
-                            {pb.costItems.map((item) => (
-                              <div
-                                key={item.costItemId}
-                                className="flex items-center justify-between py-2.5 text-sm"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span>{item.label}</span>
-                                  <Badge variant="outline" className="text-[10px] font-normal">
-                                    {getDistributionLabel(locale, item.distributionType)}
-                                  </Badge>
-                                </div>
-                                <span className="tabular-nums font-medium">
-                                  {euro(item.exactAmount, locale)}
-                                </span>
-                              </div>
-                            ))}
-                            <Separator className="my-2" />
-                            <div className="flex items-center justify-between py-2 font-bold text-base">
-                              <span>{copy.common.total}</span>
-                              <span className="tabular-nums text-primary">
-                                {euro(pb.total, locale)}
-                              </span>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                        </ResponsiveDialogTrigger>
+                        {renderParticipantDetails(pb)}
+                      </ResponsiveDialog>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -424,29 +504,39 @@ export function CalculationStep({
           {/* Mobile */}
           <div className="md:hidden space-y-1">
             {result.participantBreakdowns.map((pb) => (
-              <div
-                key={pb.participantId}
-                className="flex items-center justify-between rounded-xl px-3 py-3.5 hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-muted/50 text-xs font-bold text-muted-foreground">
-                    {pb.participantName
-                      .split(/\s+/)
-                      .map((w) => w[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase()}
+              <ResponsiveDialog key={pb.participantId}>
+                <ResponsiveDialogTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-auto w-full justify-between rounded-xl px-3 py-3.5 text-left hover:bg-muted/30"
+                    />
+                  }
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-muted/50 text-xs font-bold text-muted-foreground">
+                      {pb.participantName
+                        .split(/\s+/)
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{pb.participantName}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {pb.householdName} &middot; {pb.nights}
+                        {pb.nights === 1
+                          ? copy.common.night.charAt(0)
+                          : copy.common.nights.charAt(0)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{pb.participantName}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {pb.householdName} &middot; {pb.nights}
-                      {pb.nights === 1 ? copy.common.night.charAt(0) : copy.common.nights.charAt(0)}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm font-bold tabular-nums">{euro(pb.total, locale)}</p>
-              </div>
+                  <p className="text-sm font-bold tabular-nums">{euro(pb.total, locale)}</p>
+                </ResponsiveDialogTrigger>
+                {renderParticipantDetails(pb)}
+              </ResponsiveDialog>
             ))}
           </div>
         </CardContent>
@@ -563,6 +653,7 @@ export function CalculationStep({
                     </div>
 
                     <Accordion
+                      className="hidden md:block"
                       value={
                         openHouseholdBreakdowns.includes(ht.householdId) ? [ht.householdId] : []
                       }
@@ -583,81 +674,50 @@ export function CalculationStep({
                           {copy.calculation.showBreakdown}
                         </AccordionTrigger>
                         <AccordionContent className="mt-3 pb-0">
-                          <div className="rounded-xl border border-border/50 bg-muted/15 p-3">
-                            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                              {copy.calculation.buildUp}
-                            </p>
-                            <div className="space-y-2 text-sm">
-                              {!householdPerNightTotal.isZero() && (
-                                <BreakdownSummaryRow
-                                  label={copy.calculation.nightShare}
-                                  value={euro(householdPerNightTotal, locale)}
-                                  tooltipLabel={`${copy.calculation.includesLabel} ${copy.calculation.nightShare.toLowerCase()}`}
-                                  tooltipDescription={copy.calculation.includedItems}
-                                  tooltipItems={perNightItemLabels}
-                                />
-                              )}
-                              {!householdStayTotal.isZero() && (
-                                <BreakdownSummaryRow
-                                  label={copy.calculation.stayShare}
-                                  value={euro(householdStayTotal, locale)}
-                                  tooltipLabel={`${copy.calculation.includesLabel} ${copy.calculation.stayShare.toLowerCase()}`}
-                                  tooltipDescription={copy.calculation.includedItems}
-                                  tooltipItems={perStayItemLabels}
-                                />
-                              )}
-                              {!householdHeadcountTotal.isZero() && (
-                                <BreakdownSummaryRow
-                                  label={copy.calculation.headcountShare}
-                                  value={euro(householdHeadcountTotal, locale)}
-                                  tooltipLabel={`${copy.calculation.includesLabel} ${copy.calculation.headcountShare.toLowerCase()}`}
-                                  tooltipDescription={copy.calculation.includedItems}
-                                  tooltipItems={headcountItemLabels}
-                                />
-                              )}
-                              {directCosts.map((d) => (
-                                <div
-                                  key={d.costItemId}
-                                  className="flex items-center justify-between gap-3 text-sm"
-                                >
-                                  <span className="text-muted-foreground">
-                                    {copy.calculation.directAssigned}: {d.label}
-                                  </span>
-                                  <span className="tabular-nums font-medium">
-                                    {euro(d.exactAmount, locale)}
-                                  </span>
-                                </div>
-                              ))}
-                              <Separator className="opacity-60" />
-                              <div className="flex items-center justify-between gap-3">
-                                <span className="text-muted-foreground">
-                                  {copy.calculation.exactTotal}
-                                </span>
-                                <span className="tabular-nums font-medium">
-                                  {euro(exactTotal, locale)}
-                                </span>
-                              </div>
-                              {!ht.roundingAdjustment.isZero() && (
-                                <div className="flex items-center justify-between gap-3">
-                                  <span className="text-muted-foreground">
-                                    {copy.common.rounding}
-                                  </span>
-                                  <span className="tabular-nums font-medium">
-                                    {euro(ht.roundingAdjustment, locale)}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="flex items-center justify-between gap-3 pt-1 text-base">
-                                <span className="font-semibold">{copy.calculation.finalTotal}</span>
-                                <span className="tabular-nums font-bold text-primary">
-                                  {euro(ht.roundedDisplayTotal, locale)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                          {renderHouseholdBreakdownDetails({
+                            ht,
+                            directCosts,
+                            householdPerNightTotal,
+                            householdStayTotal,
+                            householdHeadcountTotal,
+                            exactTotal,
+                          })}
                         </AccordionContent>
                       </AccordionItem>
                     </Accordion>
+                    <div className="md:hidden">
+                      <ResponsiveDialog>
+                        <ResponsiveDialogTrigger
+                          render={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-full justify-center"
+                            />
+                          }
+                        >
+                          {copy.calculation.showBreakdown}
+                        </ResponsiveDialogTrigger>
+                        <ResponsiveDialogContent>
+                          <ResponsiveDialogHeader>
+                            <ResponsiveDialogTitle>{ht.householdName}</ResponsiveDialogTitle>
+                            <ResponsiveDialogDescription>
+                              {copy.calculation.buildUp}
+                            </ResponsiveDialogDescription>
+                          </ResponsiveDialogHeader>
+                          <ResponsiveDialogBody>
+                            {renderHouseholdBreakdownDetails({
+                              ht,
+                              directCosts,
+                              householdPerNightTotal,
+                              householdStayTotal,
+                              householdHeadcountTotal,
+                              exactTotal,
+                            })}
+                          </ResponsiveDialogBody>
+                        </ResponsiveDialogContent>
+                      </ResponsiveDialog>
+                    </div>
                   </div>
 
                   {/* Copy button */}
@@ -665,9 +725,9 @@ export function CalculationStep({
                     <Button
                       type="button"
                       variant={isCopied ? "default" : "outline"}
-                      size="sm"
+                      size="default"
                       className={cn(
-                        "w-full transition-all duration-200",
+                        "h-10 w-full justify-center gap-2 transition-all duration-200",
                         isCopied && "bg-primary text-primary-foreground",
                       )}
                       onClick={() => copyHouseholdBreakdown(ht.householdId)}

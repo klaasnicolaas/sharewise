@@ -34,18 +34,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const runtimeLocale = useLocale();
   const messages = useMessages() as Messages;
   const resolvedLocale = hasLocale(runtimeLocale) ? runtimeLocale : DEFAULT_LOCALE;
-  const [preferredLocale, setPreferredLocale] = useState<Locale>(() => {
-    if (typeof window === "undefined") {
-      return resolvedLocale;
-    }
-
-    const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (hasLocale(stored)) {
-      return stored;
-    }
-
-    return window.navigator.language.toLowerCase().startsWith("en") ? "en" : DEFAULT_LOCALE;
-  });
+  const [preferredLocale, setPreferredLocale] = useState<Locale>(resolvedLocale);
   const lastRefreshLocaleRef = useRef<Locale | null>(null);
   const locale = preferredLocale;
 

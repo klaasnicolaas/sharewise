@@ -20,6 +20,12 @@ export const translations = {
       reset: "Reset",
       export: "Export",
       import: "Import",
+      resetTitle: "Wat wil je resetten?",
+      resetDescription:
+        "Kies of je opnieuw wilt beginnen, of alleen de kosten wilt wissen en deelnemers plus huishoudens wilt behouden.",
+      resetAll: "Alles resetten",
+      resetCostsOnly: "Alleen kosten resetten",
+      resetCostsHelp: "Behoudt projectdetails, deelnemers en huishoudens.",
     },
     importDialog: {
       title: "Projectbestand importeren",
@@ -63,6 +69,7 @@ export const translations = {
       copied: "Gekopieerd!",
       copy: "Kopieer",
       clear: "Wissen",
+      cancel: "Annuleren",
       details: "Details",
       unknownHousehold: "Onbekend huishouden",
       unnamedHousehold: "Naamloos huishouden",
@@ -220,6 +227,12 @@ export const translations = {
       reset: "Reset",
       export: "Export",
       import: "Import",
+      resetTitle: "What would you like to reset?",
+      resetDescription:
+        "Choose whether to start over completely, or clear only the costs while keeping participants and households.",
+      resetAll: "Reset everything",
+      resetCostsOnly: "Reset costs only",
+      resetCostsHelp: "Keeps project details, participants, and households.",
     },
     importDialog: {
       title: "Import project file",
@@ -263,6 +276,7 @@ export const translations = {
       copied: "Copied!",
       copy: "Copy",
       clear: "Clear",
+      cancel: "Cancel",
       details: "Details",
       unknownHousehold: "Unknown household",
       unnamedHousehold: "Unnamed household",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Check, Copy } from "lucide-react";
 import { useI18n } from "@/components/i18n-provider";
 import { calculateProject } from "@/lib/calculations/calculate";
@@ -25,6 +25,15 @@ import { ImportDialog } from "@/components/dashboard/import-dialog";
 import { StepIndicator, StepNavigation } from "@/components/dashboard/step-navigation";
 import { PaymentsStep } from "@/components/payments/payments-step";
 import { ParticipantsStep } from "@/components/participants/participants-step";
+import {
+  ResponsiveDialogBody,
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/responsive-dialog";
 
 /* ─── Helpers ────────────────────────────────────────────────── */
 function createId(prefix: string) {
@@ -74,6 +83,8 @@ function createExportFileName(projectName?: string) {
 }
 
 const PROJECT_STORAGE_KEY = "sharewise-project-draft-v1";
+const PROJECT_CHANGE_EVENT = "sharewise:projectchange";
+const STEP_CHANGE_EVENT = "sharewise:stepchange";
 
 function isEmptyProjectData(source: ProjectData) {
   return (
@@ -108,6 +119,45 @@ function isStepId(value: string | null): value is StepId {
   return value !== null && STEP_IDS.includes(value as StepId);
 }
 
+function readProjectSnapshot() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem(PROJECT_STORAGE_KEY) ?? "";
+}
+
+function subscribeToProjectSnapshot(onStoreChange: () => void) {
+  const handler = () => onStoreChange();
+  window.addEventListener("storage", handler);
+  window.addEventListener(PROJECT_CHANGE_EVENT, handler);
+
+  return () => {
+    window.removeEventListener("storage", handler);
+    window.removeEventListener(PROJECT_CHANGE_EVENT, handler);
+  };
+}
+
+function readStepSnapshot(): StepId {
+  if (typeof window === "undefined") {
+    return "participants";
+  }
+
+  const urlStep = new URLSearchParams(window.location.search).get("step");
+  return isStepId(urlStep) ? urlStep : "participants";
+}
+
+function subscribeToStepSnapshot(onStoreChange: () => void) {
+  const handler = () => onStoreChange();
+  window.addEventListener("popstate", handler);
+  window.addEventListener(STEP_CHANGE_EVENT, handler);
+
+  return () => {
+    window.removeEventListener("popstate", handler);
+    window.removeEventListener(STEP_CHANGE_EVENT, handler);
+  };
+}
+
 function updateStepSearchParam(nextStep: StepId, mode: "push" | "replace" = "push") {
   const url = new URL(window.location.href);
 
@@ -121,75 +171,140 @@ function updateStepSearchParam(nextStep: StepId, mode: "push" | "replace" = "pus
 
   if (mode === "replace") {
     window.history.replaceState(null, "", nextUrl);
+    window.dispatchEvent(new Event(STEP_CHANGE_EVENT));
     return;
   }
 
   window.history.pushState(null, "", nextUrl);
+  window.dispatchEvent(new Event(STEP_CHANGE_EVENT));
 }
 
 /* ═══════════════════════════════════════════════════════════════ */
 /*  Main component                                                */
 /* ═══════════════════════════════════════════════════════════════ */
-export function SharewiseDashboard() {
+export function SharewiseDashboard({ initialStep }: { initialStep: StepId }) {
   const { locale, copy } = useI18n();
-  const [project, setProject] = useState<ProjectData>(() => {
-    if (typeof window === "undefined") {
+  const projectSnapshot = useSyncExternalStore(
+    subscribeToProjectSnapshot,
+    readProjectSnapshot,
+    () => "",
+  );
+  const step = useSyncExternalStore(subscribeToStepSnapshot, readStepSnapshot, () => initialStep);
+  const [copyState, setCopyState] = useState<string | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [renderedStep, setRenderedStep] = useState<StepId>(initialStep);
+  const [stepTransitionState, setStepTransitionState] = useState<"idle" | "out" | "in">("idle");
+  const [stepTransitionDirection, setStepTransitionDirection] = useState<"forward" | "backward">(
+    "forward",
+  );
+  const stepTransitionTimeoutRef = useRef<number | null>(null);
+  const stepTransitionFrameRef = useRef<number | null>(null);
+
+  const project = useMemo(() => {
+    if (!projectSnapshot) {
       return createEmptyProjectData();
     }
 
-    return readStoredProjectData() ?? createEmptyProjectData();
-  });
-  const [step, setStep] = useState<StepId>("participants");
-  const [copyState, setCopyState] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const [isImportOpen, setIsImportOpen] = useState(false);
+    try {
+      const parsed = JSON.parse(projectSnapshot);
+      const result = projectSchema.safeParse(parsed);
+      return result.success ? copyProjectData(result.data) : createEmptyProjectData();
+    } catch {
+      return createEmptyProjectData();
+    }
+  }, [projectSnapshot]);
 
   const steps = getSteps(locale);
   const result = useMemo(() => calculateProject(project, locale), [locale, project]);
   const householdOptions = project.households.map((h) => ({ value: h.id, label: h.name }));
   const stepIndex = steps.findIndex((s) => s.id === step);
+  const renderedStepIndex = steps.findIndex((s) => s.id === renderedStep);
   const paymentSummaryText = buildTikkieSummary(result, locale);
 
   useEffect(() => {
-    const syncStepFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      const urlStep = params.get("step");
-
-      if (isStepId(urlStep)) {
-        setStep((current) => (current === urlStep ? current : urlStep));
-        return;
-      }
-
-      setStep((current) => (current === "participants" ? current : "participants"));
-      if (urlStep) {
-        updateStepSearchParam("participants", "replace");
-      }
-    };
-
-    syncStepFromUrl();
-    window.addEventListener("popstate", syncStepFromUrl);
-
-    return () => {
-      window.removeEventListener("popstate", syncStepFromUrl);
-    };
-  }, []);
+    const initialUrlStep = new URLSearchParams(window.location.search).get("step");
+    if (initialUrlStep && !isStepId(initialUrlStep)) {
+      updateStepSearchParam("participants", "replace");
+    }
+  }, [initialStep]);
 
   useEffect(() => {
-    if (isEmptyProjectData(project)) {
+    if (step === renderedStep) {
+      return;
+    }
+
+    if (stepTransitionFrameRef.current !== null) {
+      window.cancelAnimationFrame(stepTransitionFrameRef.current);
+    }
+
+    if (stepTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(stepTransitionTimeoutRef.current);
+    }
+
+    stepTransitionFrameRef.current = window.requestAnimationFrame(() => {
+      setStepTransitionDirection(stepIndex >= renderedStepIndex ? "forward" : "backward");
+      setStepTransitionState("out");
+      stepTransitionFrameRef.current = null;
+    });
+
+    stepTransitionTimeoutRef.current = window.setTimeout(() => {
+      setRenderedStep(step);
+      setStepTransitionState("in");
+
+      stepTransitionTimeoutRef.current = window.setTimeout(() => {
+        setStepTransitionState("idle");
+        stepTransitionTimeoutRef.current = null;
+      }, 220);
+    }, 160);
+
+    return () => {
+      if (stepTransitionFrameRef.current !== null) {
+        window.cancelAnimationFrame(stepTransitionFrameRef.current);
+        stepTransitionFrameRef.current = null;
+      }
+      if (stepTransitionTimeoutRef.current !== null) {
+        window.clearTimeout(stepTransitionTimeoutRef.current);
+        stepTransitionTimeoutRef.current = null;
+      }
+    };
+  }, [renderedStep, renderedStepIndex, step, stepIndex]);
+
+  useEffect(() => {
+    if (!projectSnapshot) {
+      return;
+    }
+
+    const parsedProject = readStoredProjectData();
+    if (!parsedProject) {
       window.localStorage.removeItem(PROJECT_STORAGE_KEY);
       return;
     }
 
-    window.localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project));
-  }, [project]);
+    const normalizedProject = JSON.stringify(parsedProject);
+    if (normalizedProject !== projectSnapshot) {
+      window.localStorage.setItem(PROJECT_STORAGE_KEY, normalizedProject);
+      window.dispatchEvent(new Event(PROJECT_CHANGE_EVENT));
+    }
+  }, [projectSnapshot]);
+
+  function commitProject(nextProject: ProjectData) {
+    if (isEmptyProjectData(nextProject)) {
+      window.localStorage.removeItem(PROJECT_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(nextProject));
+    }
+
+    window.dispatchEvent(new Event(PROJECT_CHANGE_EVENT));
+  }
 
   /* ─── Actions ────────────────────────────────────────────── */
   function update(fn: (d: ProjectData) => ProjectData) {
-    startTransition(() => setProject((d) => fn(d)));
+    commitProject(fn(project));
   }
 
   function updateSync(fn: (d: ProjectData) => ProjectData) {
-    setProject((d) => fn(d));
+    commitProject(fn(project));
   }
 
   function flash(key: string) {
@@ -203,15 +318,24 @@ export function SharewiseDashboard() {
   }
 
   function setStepWithUrl(nextStep: StepId, mode: "push" | "replace" = "push") {
-    setStep((current) => (current === nextStep ? current : nextStep));
     updateStepSearchParam(nextStep, mode);
   }
 
-  function handleReset() {
-    setProject(createEmptyProjectData());
+  function handleResetAll() {
+    commitProject(createEmptyProjectData());
     setStepWithUrl("participants", "replace");
     setCopyState(null);
-    window.localStorage.removeItem(PROJECT_STORAGE_KEY);
+    setIsResetOpen(false);
+  }
+
+  function handleResetCostsOnly() {
+    commitProject({
+      ...project,
+      costItems: [],
+    });
+    setStepWithUrl("costs", "replace");
+    setCopyState(null);
+    setIsResetOpen(false);
   }
 
   function addParticipant() {
@@ -299,20 +423,77 @@ export function SharewiseDashboard() {
     if (stepIndex < steps.length - 1) setStepWithUrl(steps[stepIndex + 1].id);
   }
 
+  function renderStepContent(activeStep: StepId) {
+    if (activeStep === "participants") {
+      return <ParticipantsStep state={dashboardState} actions={dashboardActions} />;
+    }
+    if (activeStep === "costs") {
+      return <CostsStep state={dashboardState} actions={dashboardActions} />;
+    }
+    if (activeStep === "review") {
+      return <CalculationStep state={dashboardState} actions={dashboardActions} />;
+    }
+    return <PaymentsStep state={dashboardState} actions={dashboardActions} />;
+  }
+
   /* ─── Render ─────────────────────────────────────────────── */
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <DashboardHeader
-        isPending={isPending}
-        onReset={handleReset}
+        isPending={false}
+        onReset={() => setIsResetOpen(true)}
         onExport={exportJson}
         onImportClick={() => setIsImportOpen(true)}
       />
 
+      <ResponsiveDialog open={isResetOpen} onOpenChange={setIsResetOpen}>
+        <ResponsiveDialogContent
+          className="p-0"
+          dialogClassName="max-w-md border border-border/70 bg-card/96 shadow-lg"
+        >
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{copy.header.resetTitle}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              {copy.header.resetDescription}
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogBody className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-auto w-full items-start justify-start rounded-2xl px-4 py-3.5 text-left"
+              onClick={handleResetCostsOnly}
+            >
+              <span className="block text-sm font-semibold text-foreground">
+                {copy.header.resetCostsOnly}
+              </span>
+              <span className="mt-1 block text-sm font-normal text-muted-foreground">
+                {copy.header.resetCostsHelp}
+              </span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-auto w-full justify-start rounded-2xl px-4 py-3.5 text-left"
+              onClick={handleResetAll}
+            >
+              <span className="block text-sm font-semibold text-foreground">
+                {copy.header.resetAll}
+              </span>
+            </Button>
+          </ResponsiveDialogBody>
+          <ResponsiveDialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsResetOpen(false)}>
+              {copy.common.cancel}
+            </Button>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+
       <ImportDialog
         open={isImportOpen}
         onOpenChange={setIsImportOpen}
-        onImport={(data) => setProject(copyProjectData(data))}
+        onImport={(data) => commitProject(copyProjectData(data))}
       />
 
       <main className="flex-1">
@@ -356,16 +537,15 @@ export function SharewiseDashboard() {
 
           <StepIndicator currentStep={step} onStepClick={setStepWithUrl} />
 
-          {step === "participants" && (
-            <ParticipantsStep state={dashboardState} actions={dashboardActions} />
-          )}
-          {step === "costs" && <CostsStep state={dashboardState} actions={dashboardActions} />}
-          {step === "review" && (
-            <CalculationStep state={dashboardState} actions={dashboardActions} />
-          )}
-          {step === "payments" && (
-            <PaymentsStep state={dashboardState} actions={dashboardActions} />
-          )}
+          <div
+            className="step-transition-shell"
+            data-step-transition={stepTransitionState}
+            data-step-direction={stepTransitionDirection}
+          >
+            <div key={renderedStep} className="step-transition-panel">
+              {renderStepContent(renderedStep)}
+            </div>
+          </div>
 
           <StepNavigation
             currentStep={step}
@@ -376,8 +556,9 @@ export function SharewiseDashboard() {
               <Button
                 type="button"
                 variant="outline"
+                size="default"
                 onClick={() => handleCopy("payments", paymentSummaryText)}
-                className="gap-2 shadow-sm"
+                className="h-10 justify-center gap-2 shadow-sm"
               >
                 {copyState === "payments" ? (
                   <Check className="size-4" />
