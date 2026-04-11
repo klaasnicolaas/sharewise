@@ -189,11 +189,7 @@ export function SharewiseDashboard({ initialStep }: { initialStep: StepId }) {
     readProjectSnapshot,
     () => "",
   );
-  const step = useSyncExternalStore(
-    subscribeToStepSnapshot,
-    readStepSnapshot,
-    () => initialStep,
-  );
+  const step = useSyncExternalStore(subscribeToStepSnapshot, readStepSnapshot, () => initialStep);
   const [copyState, setCopyState] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isResetOpen, setIsResetOpen] = useState(false);
@@ -457,7 +453,9 @@ export function SharewiseDashboard({ initialStep }: { initialStep: StepId }) {
         >
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>{copy.header.resetTitle}</ResponsiveDialogTitle>
-            <ResponsiveDialogDescription>{copy.header.resetDescription}</ResponsiveDialogDescription>
+            <ResponsiveDialogDescription>
+              {copy.header.resetDescription}
+            </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <ResponsiveDialogBody className="space-y-3">
             <Button

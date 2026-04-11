@@ -237,7 +237,10 @@ export function CostsStep({
                             return (
                               <DropdownMenuRadioItem key={o.value} value={o.value}>
                                 <OptIcon
-                                  className={cn("size-3.5 shrink-0", DISTRIBUTION_VISUALS[o.value].color)}
+                                  className={cn(
+                                    "size-3.5 shrink-0",
+                                    DISTRIBUTION_VISUALS[o.value].color,
+                                  )}
                                 />
                                 {o.label}
                               </DropdownMenuRadioItem>

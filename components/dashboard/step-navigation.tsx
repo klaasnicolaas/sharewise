@@ -113,15 +113,17 @@ export function StepIndicator({
                     "flex-1 rounded-xl border-transparent transition-all shadow-none",
                     isActive &&
                       "bg-primary text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary hover:text-primary-foreground",
-                    isPast &&
-                      !isActive &&
-                      "bg-primary/8 text-primary hover:bg-primary/12",
+                    isPast && !isActive && "bg-primary/8 text-primary hover:bg-primary/12",
                     !isActive &&
                       !isPast &&
                       "bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground",
                   )}
                 >
-                  {isPast && !isActive ? <Check className="size-3.5" /> : <Icon className="size-3.5" />}
+                  {isPast && !isActive ? (
+                    <Check className="size-3.5" />
+                  ) : (
+                    <Icon className="size-3.5" />
+                  )}
                 </Button>
               );
             })}

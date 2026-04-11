@@ -235,12 +235,7 @@ function ParticipantRow({
   );
 
   return (
-    <div
-      className={cn(
-        "group px-3 py-3 sm:px-4 sm:py-3",
-        !isLast && "border-b border-border/20",
-      )}
-    >
+    <div className={cn("group px-3 py-3 sm:px-4 sm:py-3", !isLast && "border-b border-border/20")}>
       {/* ── Row 1 ── */}
       <div className="flex items-start gap-2">
         {/* Avatar — nudge down to align with name input */}
@@ -312,9 +307,7 @@ function ParticipantRow({
       </div>
 
       {/* ── Mobile Row 2: 3 toggle pills only, never wraps ── */}
-      <div className="mt-2 flex items-center gap-1.5 pl-10 sm:hidden">
-        {settingPills}
-      </div>
+      <div className="mt-2 flex items-center gap-1.5 pl-10 sm:hidden">{settingPills}</div>
 
       {/* ── Mobile Row 3: notes ── */}
       <div className="mt-1.5 flex items-center gap-1 pl-10 text-muted-foreground sm:hidden">

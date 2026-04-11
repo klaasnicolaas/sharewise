@@ -40,7 +40,9 @@ function ResponsiveDialog({
   return (
     <ResponsiveDialogContext.Provider value={{ isMobile }}>
       {isMobile ? (
-        <Drawer data-slot="responsive-dialog" {...props}>{children}</Drawer>
+        <Drawer data-slot="responsive-dialog" {...props}>
+          {children}
+        </Drawer>
       ) : (
         <DialogPrimitive.Root data-slot="responsive-dialog" {...props}>
           {children}
@@ -71,18 +73,15 @@ function ResponsiveDialogTrigger({
     : children;
 
   return isMobile ? (
-    <DrawerTrigger
-      data-slot="responsive-dialog-trigger"
-      asChild
-      {...props}
-      className={className}
-    >
+    <DrawerTrigger data-slot="responsive-dialog-trigger" asChild {...props} className={className}>
       {React.isValidElement(triggerChild) ? triggerChild : <span>{triggerChild}</span>}
     </DrawerTrigger>
   ) : (
     <DialogPrimitive.Trigger
       data-slot="responsive-dialog-trigger"
-      render={React.isValidElement(render) ? React.cloneElement(render, undefined, children) : render}
+      render={
+        React.isValidElement(render) ? React.cloneElement(render, undefined, children) : render
+      }
       className={className}
       {...props}
     >
@@ -91,7 +90,9 @@ function ResponsiveDialogTrigger({
   );
 }
 
-function ResponsiveDialogClose(props: DialogPrimitive.Close.Props & React.ComponentProps<typeof DrawerClose>) {
+function ResponsiveDialogClose(
+  props: DialogPrimitive.Close.Props & React.ComponentProps<typeof DrawerClose>,
+) {
   const { isMobile } = useResponsiveDialogContext();
 
   return isMobile ? (
@@ -149,7 +150,9 @@ function ResponsiveDialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="responsive-dialog-close"
-            render={<Button variant="ghost" className="absolute right-3 top-3 z-10" size="icon-sm" />}
+            render={
+              <Button variant="ghost" className="absolute right-3 top-3 z-10" size="icon-sm" />
+            }
           >
             <XIcon />
             <span className="sr-only">Close</span>
@@ -160,10 +163,7 @@ function ResponsiveDialogContent({
   );
 }
 
-function ResponsiveDialogHeader({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function ResponsiveDialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   const { isMobile } = useResponsiveDialogContext();
 
   if (isMobile) {
@@ -188,10 +188,7 @@ function ResponsiveDialogHeader({
   );
 }
 
-function ResponsiveDialogBody({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function ResponsiveDialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="responsive-dialog-body"
@@ -204,11 +201,7 @@ function ResponsiveDialogBody({
   );
 }
 
-function ResponsiveDialogFooter({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+function ResponsiveDialogFooter({ className, children, ...props }: React.ComponentProps<"div">) {
   const { isMobile } = useResponsiveDialogContext();
 
   if (isMobile) {
