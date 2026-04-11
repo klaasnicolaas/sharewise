@@ -4,14 +4,14 @@ All React components. Every component file is a client component (`"use client"`
 
 ## Structure
 
-| Directory        | Purpose                                              |
-| ---------------- | ---------------------------------------------------- |
-| `dashboard/`     | Shell, header, footer, import dialog, step navigation |
-| `participants/`  | Participants and households wizard step               |
-| `costs/`         | Cost entry wizard step                                |
-| `calculation/`   | Review and calculation breakdown step                 |
-| `payments/`      | Final payment summary step                            |
-| `ui/`            | shadcn/ui base primitives                             |
+| Directory       | Purpose                                               |
+| --------------- | ----------------------------------------------------- |
+| `dashboard/`    | Shell, header, footer, import dialog, step navigation |
+| `participants/` | Participants and households wizard step               |
+| `costs/`        | Cost entry wizard step                                |
+| `calculation/`  | Review and calculation breakdown step                 |
+| `payments/`     | Final payment summary step                            |
+| `ui/`           | shadcn/ui base primitives                             |
 
 ## Conventions
 

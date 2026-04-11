@@ -4,24 +4,24 @@ Shared logic, types, and utilities. No React components here — only pure funct
 
 ## Structure
 
-| File / Directory    | Purpose                                                    |
-| ------------------- | ---------------------------------------------------------- |
-| `calculations/`     | Calculation engine, money helpers, types, validation        |
-| `dashboard-types.ts`| Wizard step IDs, `DashboardState`, `DashboardActions` types |
-| `i18n.ts`           | Translation strings (nl/en), locale helpers, formatting     |
-| `utils.ts`          | `cn()` class name merger (tailwind-merge + clsx)            |
+| File / Directory     | Purpose                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| `calculations/`      | Calculation engine, money helpers, types, validation        |
+| `dashboard-types.ts` | Wizard step IDs, `DashboardState`, `DashboardActions` types |
+| `i18n.ts`            | Translation strings (nl/en), locale helpers, formatting     |
+| `utils.ts`           | `cn()` class name merger (tailwind-merge + clsx)            |
 
 ## calculations/
 
 The calculation engine is the core of Sharewise. It is pure — no React, no side effects, no DOM access.
 
-| File              | Purpose                                                        |
-| ----------------- | -------------------------------------------------------------- |
-| `types.ts`        | All domain types: `ProjectData`, `CalculationResult`, etc.     |
-| `calculate.ts`    | `calculateProject()` — main entry point, produces full result  |
-| `money.ts`        | `decimal.js` wrappers: `money()`, `euro()`, `allocateRoundedCents()` |
-| `validation.ts`   | Zod schemas and `validateProjectWarnings()`                    |
-| `selectors.ts`    | Text formatters for summaries, breakdowns, and copy-to-clipboard |
+| File            | Purpose                                                              |
+| --------------- | -------------------------------------------------------------------- |
+| `types.ts`      | All domain types: `ProjectData`, `CalculationResult`, etc.           |
+| `calculate.ts`  | `calculateProject()` — main entry point, produces full result        |
+| `money.ts`      | `decimal.js` wrappers: `money()`, `euro()`, `allocateRoundedCents()` |
+| `validation.ts` | Zod schemas and `validateProjectWarnings()`                          |
+| `selectors.ts`  | Text formatters for summaries, breakdowns, and copy-to-clipboard     |
 
 ### Rules
 

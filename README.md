@@ -55,13 +55,13 @@ Sharewise works entirely in the browser. No account needed, no data leaves your 
 
 Sharewise supports five distribution types:
 
-| Type | Description |
-| --- | --- |
-| `per_night` | Split across counted person-nights |
-| `per_stay_person` | Split evenly across participants counted for stay-related costs |
-| `headcount` | Split evenly across participants counted for general shared costs |
-| `direct_household` | Assign the full amount to one household |
-| `excluded` | Keep a cost visible without including it in the final calculation |
+| Type               | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
+| `per_night`        | Split across counted person-nights                                |
+| `per_stay_person`  | Split evenly across participants counted for stay-related costs   |
+| `headcount`        | Split evenly across participants counted for general shared costs |
+| `direct_household` | Assign the full amount to one household                           |
+| `excluded`         | Keep a cost visible without including it in the final calculation |
 
 Internally, Sharewise uses `decimal.js` so calculations remain precise until final display rounding. Household totals are rounded in a way that keeps the final sum aligned with the project total.
 

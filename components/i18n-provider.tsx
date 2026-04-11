@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useMessages } from "next-intl";
 import {
@@ -57,12 +65,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
   }, [locale, resolvedLocale, router]);
 
-  const setLocale = useCallback(
-    (nextLocale: Locale) => {
-      setPreferredLocale((current) => (current === nextLocale ? current : nextLocale));
-    },
-    [],
-  );
+  const setLocale = useCallback((nextLocale: Locale) => {
+    setPreferredLocale((current) => (current === nextLocale ? current : nextLocale));
+  }, []);
 
   const value = useMemo(
     () => ({
