@@ -580,28 +580,26 @@ export function ParticipantsStep({
                 </Badge>
 
                 {/* Delete on hover */}
-                {project.households.length > 1 && (
-                  <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            className="text-destructive/75 hover:bg-destructive/5 hover:text-destructive"
-                            onClick={() => removeHousehold(h.id)}
-                          />
-                        }
-                      >
-                        <X className="size-3" />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        {copy.participants.removeHousehold}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                )}
+                <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="text-destructive/75 hover:bg-destructive/5 hover:text-destructive"
+                          onClick={() => removeHousehold(h.id)}
+                        />
+                      }
+                    >
+                      <X className="size-3" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {copy.participants.removeHousehold}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
             );
           })}

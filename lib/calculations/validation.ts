@@ -4,12 +4,12 @@ import { formatValidationMessage, type Locale, translations } from "@/lib/i18n";
 
 export const householdSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(1, translations.nl.validation.householdNameRequired),
+  name: z.string(),
 });
 
 export const participantSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(1, translations.nl.validation.participantNameRequired),
+  name: z.string(),
   householdId: z.string().min(1).optional(),
   nights: z.number().min(0),
   countInNightDistribution: z.boolean(),
@@ -21,7 +21,7 @@ export const participantSchema = z.object({
 export const costItemSchema = z
   .object({
     id: z.string().min(1),
-    label: z.string().min(1, translations.nl.validation.costItemNameRequired),
+    label: z.string(),
     amount: z.number().min(0),
     distributionType: z.enum([
       "per_night",
