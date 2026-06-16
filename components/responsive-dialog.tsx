@@ -54,11 +54,12 @@ function ResponsiveDialog({
 
 type ResponsiveDialogTriggerProps = Omit<
   DialogPrimitive.Trigger.Props,
-  "children" | "render" | "className"
+  "children" | "render" | "className" | "style"
 > & {
   children: React.ReactNode;
   className?: string;
   render?: React.ReactElement;
+  style?: React.CSSProperties;
 };
 
 function ResponsiveDialogTrigger({
